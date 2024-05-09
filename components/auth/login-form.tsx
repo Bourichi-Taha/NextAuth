@@ -32,9 +32,9 @@ const LoginForm = () => {
         setError("");
         setSuccess("");
         startTransition(()=>{
-            login(values).then((data:{success?:string,error?:string})=>{
-                if(data.error) setError(data.error);
-                if(data.success) setSuccess(data.success);
+            login(values).then((data:any)=>{
+                if(data && data.error) setError(data.error);
+                if(data && data.success) setSuccess(data.success);
             });
         });
     }
