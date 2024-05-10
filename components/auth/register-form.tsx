@@ -23,7 +23,7 @@ const RegisterForm = () => {
         defaultValues: {
             email: "",
             password: "",
-            username: ""
+            name: ""
         }
     });
 
@@ -33,7 +33,8 @@ const RegisterForm = () => {
         setError("");
         setSuccess("");
         startTransition(() => {
-            login(values).then((data:any)=>{
+            register(values).then((data:any)=>{
+                console.log(data);
                 if(data && data.error) setError(data.error);
                 if(data && data.success) setSuccess(data.success);
             });
@@ -56,11 +57,11 @@ const RegisterForm = () => {
                     <div className="space-y-4">
                         <FormField
                             control={form.control}
-                            name="username"
+                            name="name"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Username
+                                        Name
                                     </FormLabel>
                                     <FormControl>
                                         <Input
