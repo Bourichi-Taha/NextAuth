@@ -76,17 +76,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // async signIn({ user }) {
-    //   if (!user.id) {
-    //     return false;
-    //   }
-    //   const dbUser = await getUserById(user.id);
-    //   if (!dbUser || !dbUser.emailVerified) {
-    //     return false;
-    //   }
-    //   return true;
-    // },
-    //TODO: uncomment later
+    async signIn({ user,account }) {
+      //allow OAuth without email verification
+      if (account?.provider !== "credentials") {
+        return true
+      }
+      if (!user.id) {
+        return false;
+      }
+      const dbUser = await getUserById(user.id);
+      if (!dbUser || !dbUser.emailVerified) {
+        return false;
+      }
+      //TODO: add 2FA
+      return true;
+    },
     async jwt({ token }) {
       if (!token.sub) {
         return token;
