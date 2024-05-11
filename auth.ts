@@ -6,7 +6,9 @@ import { LoginSchema } from "./schemas"
 import { getUserByEmail, getUserById } from "./data/user"
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client"
-
+import { JWT } from "next-auth/jwt"
+import Google from "next-auth/providers/google"
+import Github from "next-auth/providers/github"
 
 declare module "next-auth" {
   /**
@@ -26,7 +28,7 @@ declare module "next-auth" {
   }
 }
 
-import { JWT } from "next-auth/jwt"
+
 
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `auth`, when using JWT sessions */
@@ -64,6 +66,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return null;
       }
     }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    Github({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET
+    }),
   ],
   callbacks: {
     // async signIn({ user }) {
@@ -98,6 +108,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return session;
     },
   },
+  events: {
+    async linkAccount({user}) {
+            await db.user.update({
+              where: {
+                id: user.id,
+              },
+              data: {
+                emailVerified: new Date(),
+              }
+            })
+    },
+  } ,
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/error",
+  }
 });
