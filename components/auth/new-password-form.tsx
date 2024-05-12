@@ -3,42 +3,48 @@
 import CardWrapper from "@/components/auth/card-wrapper"
 import { useForm } from "react-hook-form"
 import * as z from "zod";
-import {LoginSchema} from "@/schemas"
+import {NewPasswordSchema} from "@/schemas"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "../ui/button";
 import FormError from "../form-error";
 import FormSuccess from "../form-success";
-import { login } from "@/actions/login";
 import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { newPassword } from "@/actions/new-password";
 
-const LoginForm = () => {
+const NewPasswordForm = () => {
 
     const [error,setError]= useState("");
     const [success,setSuccess]= useState("");
 
     const searchParams = useSearchParams();
 
-    const urlError = searchParams.get("error") === "OAuthAccountNotLinked" ? "Email already linked with another provider" : "";
+    const token = searchParams.get('token');
 
-    const form = useForm<z.infer<typeof LoginSchema>>({
-        resolver:zodResolver(LoginSchema),
+    if (!token) {
+        setError("Token not found!");
+    }
+
+    const form = useForm<z.infer<typeof NewPasswordSchema>>({
+        resolver:zodResolver(NewPasswordSchema),
         defaultValues: {
-            email: "",
-            password: ""
+            password: "",
+            token:token || ""
         }
     });
 
     const [isPending,startTransition] = useTransition();
 
-    const onSubmit = async(values: z.infer<typeof LoginSchema>) => {
+    const onSubmit = async(values: z.infer<typeof NewPasswordSchema>) => {
+        if (!token) {
+            return;
+        }
         setError("");
         setSuccess("");
         startTransition(()=>{
-            login(values).then((data:any)=>{
+            newPassword(values).then((data:any)=>{
                 if(data && data.error) setError(data.error);
                 if(data && data.success) setSuccess(data.success);
             });
@@ -48,10 +54,9 @@ const LoginForm = () => {
 
   return (
     <CardWrapper 
-        headerLabel="Welcome back"
-        backButtonHref="/auth/register"
-        backButtonLabel="Dont&apos;t have an account?"
-        showSocial
+        headerLabel="Enter a new password"
+        backButtonHref="/auth/login"
+        backButtonLabel="Back to login"
     >
         <Form {...form}>
             <form
@@ -59,26 +64,6 @@ const LoginForm = () => {
                 className="space-y-6"
             >
                 <div className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({field})=>(
-                            <FormItem>
-                                <FormLabel>
-                                    Email
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        {...field}
-                                        placeholder="john.doe@example.com"
-                                        type="email"
-                                        disabled={isPending}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                     <FormField
                         control={form.control}
                         name="password"
@@ -95,24 +80,20 @@ const LoginForm = () => {
                                         disabled={isPending}
                                     />
                                 </FormControl>
-                                <Button size={"sm"} variant={"link"} asChild className="px-0 font-normal text-xs text-muted-foreground hover:text-black/80">
-                                    <Link href={"/auth/reset"}>
-                                        Forgot password?
-                                    </Link>
-                                </Button>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                    
                 </div>
-                <FormError message={error || urlError} />
+                <FormError message={error} />
                 <FormSuccess message={success} />
                 <Button
                     type="submit"
                     className="w-full"
                     disabled={isPending}
                 >
-                    Login
+                    Change password
                 </Button>
             </form>
         </Form>
@@ -120,4 +101,4 @@ const LoginForm = () => {
   )
 }
 
-export default LoginForm
+export default NewPasswordForm
