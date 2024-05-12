@@ -9,6 +9,7 @@ import { UserRole } from "@prisma/client"
 import { JWT } from "next-auth/jwt"
 import Google from "next-auth/providers/google"
 import Github from "next-auth/providers/github"
+import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation"
 
 declare module "next-auth" {
   /**
@@ -88,7 +89,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (!dbUser || !dbUser.emailVerified) {
         return false;
       }
-      //TODO: add 2FA
+      
+      if (dbUser.isTwoFactorEnabled) {
+        const confirmation = await getTwoFactorConfirmationByUserId(dbUser.id);
+        if (!confirmation) {
+          return false
+        }
+        //Delete two factor confirmation for next sign in
+        await db.twoFactorConfirmation.delete({where:{id:confirmation.id}});
+      }
+
       return true;
     },
     async jwt({ token }) {
