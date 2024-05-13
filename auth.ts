@@ -11,21 +11,17 @@ import Google from "next-auth/providers/google"
 import Github from "next-auth/providers/github"
 import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation"
 
+export type ExtendedUser = {
+  role: UserRole;
+  isTwoFactorEnabled: boolean;
+} & DefaultSession["user"];
+
 declare module "next-auth" {
   /**
    * Returned by `auth`, `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session {
-    user: {
-      /** The user's role . */
-      role: UserRole
-      /**
-       * By default, TypeScript merges new interface properties and overwrites existing ones.
-       * In this case, the default session user properties will be overwritten,
-       * with the new ones defined above. To keep the default session user properties,
-       * you need to add them back into the newly declared interface.
-       */
-    } & DefaultSession["user"]
+    user: ExtendedUser;
   }
 }
 
@@ -35,7 +31,8 @@ declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `auth`, when using JWT sessions */
   interface JWT {
     /** OpenID ID Token */
-    role?: UserRole
+    role?: UserRole;
+    isTwoFactorEnabled?: boolean;
   }
 }
 
@@ -110,6 +107,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return token;
       }
       token.role = user.role;
+      token.isTwoFactorEnabled = user.isTwoFactorEnabled;
       return token;
     },
     async session({ token, session }) {
@@ -118,6 +116,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       if (token.role && session.user) {
         session.user.role = token.role;
+      }
+      if (session.user && token.isTwoFactorEnabled !== undefined ) {
+        session.user.isTwoFactorEnabled = token.isTwoFactorEnabled;
       }
       return session;
     },
