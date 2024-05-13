@@ -130,9 +130,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               },
               data: {
                 emailVerified: new Date(),
+                image:user.image,
               }
             })
     },
+    
   } ,
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
